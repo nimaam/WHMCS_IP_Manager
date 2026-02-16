@@ -1,0 +1,145 @@
+<?php
+
+/**
+ * IP Manager - English language file.
+ *
+ * @copyright 2025
+ */
+
+if (!defined("WHMCS")) {
+    die("This file cannot be accessed directly");
+}
+
+$_ADDONLANG["menu_dashboard"]       = "Dashboard";
+$_ADDONLANG["menu_subnets"]         = "IP Subnets";
+$_ADDONLANG["menu_pools"]           = "IP Pools";
+$_ADDONLANG["menu_configurations"]  = "Configurations";
+$_ADDONLANG["menu_assignments"]     = "Assignments";
+$_ADDONLANG["menu_sync"]            = "Synchronize";
+$_ADDONLANG["menu_export"]          = "Export";
+$_ADDONLANG["menu_import"]          = "Import";
+$_ADDONLANG["menu_logs"]            = "Logs";
+$_ADDONLANG["menu_settings"]        = "Settings";
+$_ADDONLANG["menu_translations"]    = "Translations";
+$_ADDONLANG["menu_acl"]             = "ACL";
+$_ADDONLANG["menu_integrations"]    = "Integrations";
+$_ADDONLANG["integrations_info"]   = "When you assign an IP to a service, IP Manager can push the IP to the server using the configured integration. Enable the integration that matches your server module.";
+$_ADDONLANG["enabled"]              = "Enabled";
+$_ADDONLANG["integration_saved"]    = "Integration saved.";
+$_ADDONLANG["integration_push_on_assign"] = "Push IP on assign when server type matches";
+
+$_ADDONLANG["stat_subnets"]         = "IP Subnets";
+$_ADDONLANG["stat_pools"]           = "IP Pools";
+$_ADDONLANG["stat_assigned"]        = "Assigned IPs";
+$_ADDONLANG["stat_free"]            = "Free IPs";
+$_ADDONLANG["quick_actions"]        = "Quick Actions";
+$_ADDONLANG["add_subnet"]           = "Add IP Subnet";
+$_ADDONLANG["manage_configurations"] = "Manage Configurations";
+$_ADDONLANG["sync_whmcs"]           = "Sync with WHMCS";
+
+$_ADDONLANG["subnet_name"]          = "Name";
+$_ADDONLANG["subnet_cidr"]          = "CIDR";
+$_ADDONLANG["subnet_parent"]        = "Parent";
+$_ADDONLANG["subnet_tree_info"]     = "Manage IP subnets in a tree. Add subnets with CIDR notation (IPv4/IPv6).";
+$_ADDONLANG["subnet_gateway"]       = "Gateway";
+$_ADDONLANG["subnet_excluded_ips"]  = "Excluded IPs";
+$_ADDONLANG["subnet_reservation"]   = "Reserve";
+$_ADDONLANG["reserve_network"]      = "Network";
+$_ADDONLANG["reserve_broadcast"]    = "Broadcast";
+$_ADDONLANG["reserve_gateway"]      = "Gateway";
+$_ADDONLANG["subnet_populate_free"] = "Store free IPs";
+$_ADDONLANG["subnet_populate_free_help"] = "Pre-populate IP addresses in database (max 65536 IPv4)";
+$_ADDONLANG["none"]                 = "None";
+$_ADDONLANG["save"]                 = "Save";
+$_ADDONLANG["cancel"]               = "Cancel";
+$_ADDONLANG["edit"]                 = "Edit";
+$_ADDONLANG["actions"]              = "Actions";
+$_ADDONLANG["no_subnets"]           = "No subnets yet. Add one to get started.";
+$_ADDONLANG["invalid_cidr"]        = "Invalid CIDR notation.";
+$_ADDONLANG["name_cidr_required"]  = "Name and CIDR are required.";
+$_ADDONLANG["name"]                 = "Name";
+$_ADDONLANG["action"]               = "Action";
+$_ADDONLANG["details"]              = "Details";
+$_ADDONLANG["date"]                 = "Date";
+$_ADDONLANG["no_logs"]              = "No log entries yet.";
+$_ADDONLANG["pools_coming_soon"]    = "IP Pools management: create pools from subnets, assign to products/servers. (Coming soon)";
+$_ADDONLANG["configurations_info"]  = "Create configurations for different IP assignment scenarios (products, addons, configurable options, servers).";
+$_ADDONLANG["no_configurations"]    = "No configurations yet.";
+$_ADDONLANG["add_pool"]             = "Add Pool";
+$_ADDONLANG["pool_name"]            = "Name";
+$_ADDONLANG["pool_subnet"]          = "Subnet";
+$_ADDONLANG["pool_name_subnet_required"] = "Name and Subnet are required.";
+$_ADDONLANG["pool_delete_confirm"]  = "Delete this pool? IPs in this pool will be unlinked.";
+$_ADDONLANG["no_pools"]             = "No pools. Add a pool to a subnet first.";
+$_ADDONLANG["filter_subnet"]        = "Subnet";
+$_ADDONLANG["all"]                  = "All";
+$_ADDONLANG["delete"]               = "Delete";
+$_ADDONLANG["add_configuration"]    = "Add Configuration";
+$_ADDONLANG["omit_dedicated_ip"]    = "Omit dedicated IP field";
+$_ADDONLANG["use_custom_field_assigned"] = "Use custom field instead of Assigned IP";
+$_ADDONLANG["custom_field_name"]    = "Custom field name";
+$_ADDONLANG["configuration_relations"] = "Relations (Products, Addons, Config Options, Servers)";
+$_ADDONLANG["relation_type"]        = "Type";
+$_ADDONLANG["relation_id"]          = "Target";
+$_ADDONLANG["add_relation"]         = "Add";
+$_ADDONLANG["relation_help"]        = "Select type, then one target, then either a Pool or Subnet for IP assignment.";
+$_ADDONLANG["product"]              = "Product";
+$_ADDONLANG["addon"]                = "Addon";
+$_ADDONLANG["configoption"]         = "Config Option";
+$_ADDONLANG["server"]               = "Server";
+$_ADDONLANG["subnet"]               = "Subnet";
+$_ADDONLANG["pool"]                 = "Pool";
+$_ADDONLANG["select"]               = "Select";
+$_ADDONLANG["select_type"]          = "Type";
+$_ADDONLANG["confirm_delete"]       = "Delete?";
+$_ADDONLANG["assignments_info"]     = "Assign/Unassign/Delete IPs from Products/Services view. (Integrate with admin products list.)";
+$_ADDONLANG["sync_info"]            = "Synchronize IP addresses used by products in WHMCS with IP Manager subnets.";
+$_ADDONLANG["run_sync"]             = "Run Sync";
+$_ADDONLANG["sync_help"]            = "For each service with a dedicated IP in WHMCS: if the IP is already in IP Manager (any subnet), it will be assigned to that service; if not, it will be added to a subnet that contains it and then assigned.";
+$_ADDONLANG["sync_done"]            = "Sync complete.";
+$_ADDONLANG["sync_synced"]          = "synced";
+$_ADDONLANG["sync_created"]        = "IPs created";
+$_ADDONLANG["sync_skipped"]        = "skipped";
+$_ADDONLANG["errors"]               = "Errors";
+$_ADDONLANG["export_info"]          = "Export IP subnets/pools in CSV, XML or JSON format.";
+$_ADDONLANG["import_info"]          = "Import IP subnets/pools from CSV, XML or JSON.";
+$_ADDONLANG["settings_info"]        = "Module settings are configured in Addons → Addon Modules → IP Manager (Configure).";
+$_ADDONLANG["usage_alerts"]         = "Usage alerts";
+$_ADDONLANG["usage_alerts_help"]    = "When subnet/pool usage exceeds the configured threshold (%), an email is sent to the first admin. Run the check manually below or add a cron job.";
+$_ADDONLANG["usage_alerts_sent"]    = "Alerts sent";
+$_ADDONLANG["usage_alerts_skipped"] = "Skipped";
+$_ADDONLANG["run_usage_check"]      = "Run usage check now";
+$_ADDONLANG["usage_alerts_cron"]    = "Cron";
+$_ADDONLANG["import_warning"]       = "Import creates new subnets and pools. Parent IDs are remapped. Use JSON or XML exported from this module for best results.";
+$_ADDONLANG["import_format"]        = "Format";
+$_ADDONLANG["import_file"]          = "File";
+$_ADDONLANG["import_submit"]        = "Import";
+$_ADDONLANG["import_subnets_created"] = "subnets created";
+$_ADDONLANG["import_pools_created"] = "pools created";
+$_ADDONLANG["translations_info"]    = "Customize module language files for multi-language support.";
+$_ADDONLANG["acl_info"]             = "Control staff access level to specific resources (subnets, pools, configurations).";
+
+$_ADDONLANG["client_ip_manager"]    = "IP Manager";
+$_ADDONLANG["client_unassign_ip"]   = "Unassign IP";
+$_ADDONLANG["client_order_ips"]     = "Order Additional IPs";
+$_ADDONLANG["client_your_ips"]      = "Your Assigned IP Addresses";
+$_ADDONLANG["client_no_ips"]        = "You have no assigned IP addresses.";
+$_ADDONLANG["client_product"]       = "Product / Service";
+$_ADDONLANG["client_ip_address"]    = "IP Address";
+$_ADDONLANG["client_subnet"]        = "Subnet";
+$_ADDONLANG["client_actions"]       = "Actions";
+$_ADDONLANG["client_unassign_confirm"] = "Are you sure you want to unassign this IP address?";
+$_ADDONLANG["client_unassign_done"] = "IP address has been unassigned.";
+$_ADDONLANG["client_unassign_error"] = "You cannot unassign this IP or it was already unassigned.";
+$_ADDONLANG["assign"]               = "Assign";
+$_ADDONLANG["unassign"]             = "Unassign";
+$_ADDONLANG["assign_success"]       = "IP assigned.";
+$_ADDONLANG["assign_no_free_ip"]    = "No free IP in selected pool/subnet or assign failed.";
+$_ADDONLANG["unassign_success"]     = "IP unassigned.";
+$_ADDONLANG["unassign_failed"]      = "Unassign failed.";
+$_ADDONLANG["client_id"]            = "Client ID";
+$_ADDONLANG["service_id"]           = "Service ID";
+$_ADDONLANG["filter"]               = "Filter";
+$_ADDONLANG["client"]               = "Client";
+$_ADDONLANG["assigned_ips"]         = "Assigned IPs";
+$_ADDONLANG["whmcs_dedicatedip"]    = "WHMCS dedicatedip";
