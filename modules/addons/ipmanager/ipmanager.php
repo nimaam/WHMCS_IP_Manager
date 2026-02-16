@@ -128,6 +128,7 @@ function ipmanager_output(array $vars): void {
         "configurations",
         "assignments",
         "sync",
+        "orphans",
         "export",
         "import",
         "logs",

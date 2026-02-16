@@ -22,12 +22,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["run_sync"])) {
     $skipped = 0;
     $created = 0;
     $errors = [];
+    $liveOnly = !empty($_POST["sync_live_only"]);
 
-    $rows = Capsule::table("tblhosting")
+    $query = Capsule::table("tblhosting")
         ->whereNotNull("dedicatedip")
         ->where("dedicatedip", "!=", "")
-        ->select("id as service_id", "userid as client_id", "dedicatedip")
-        ->get();
+        ->select("id as service_id", "userid as client_id", "dedicatedip");
+    if ($liveOnly) {
+        $query->whereIn("status", ["Active", "Pending"]);
+    }
+    $rows = $query->get();
 
     foreach ($rows as $row) {
         $serviceId = (int) $row->service_id;
@@ -131,10 +135,23 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["run_sync"])) {
             </div>
         <?php endif; ?>
 
-        <form method="post">
-            <button type="submit" name="run_sync" value="1" class="btn btn-primary">
-                <i class="fa fa-refresh"></i> <?php echo htmlspecialchars($LANG["run_sync"] ?? "Run Sync"); ?>
-            </button>
+        <form method="post" class="form-horizontal">
+            <div class="form-group">
+                <div class="col-sm-12">
+                    <label class="checkbox-inline">
+                        <input type="checkbox" name="sync_live_only" value="1"<?php echo (!isset($_POST["run_sync"]) || !empty($_POST["sync_live_only"])) ? " checked" : ""; ?>>
+                        <?php echo htmlspecialchars($LANG["sync_live_only"] ?? "Import only live services (Active and Pending)"); ?>
+                    </label>
+                    <p class="help-block text-muted small"><?php echo htmlspecialchars($LANG["sync_live_only_help"] ?? "When checked, only services with status Active or Pending are imported. Suspended, Cancelled and Terminated are skipped to avoid orphans."); ?></p>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-12">
+                    <button type="submit" name="run_sync" value="1" class="btn btn-primary">
+                        <i class="fa fa-refresh"></i> <?php echo htmlspecialchars($LANG["run_sync"] ?? "Run Sync"); ?>
+                    </button>
+                </div>
+            </div>
         </form>
     </div>
 </div>

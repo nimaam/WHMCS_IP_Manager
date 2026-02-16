@@ -20,6 +20,7 @@ $menu = [
     "configurations" => ["label" => $_lang["menu_configurations"] ?? "Configurations", "icon" => "fa-cogs"],
     "assignments"    => ["label" => $_lang["menu_assignments"] ?? "Assignments", "icon" => "fa-link"],
     "sync"           => ["label" => $_lang["menu_sync"] ?? "Synchronize", "icon" => "fa-refresh"],
+    "orphans"        => ["label" => $_lang["menu_orphans"] ?? "Orphaned", "icon" => "fa-unlink"],
     "export"         => ["label" => $_lang["menu_export"] ?? "Export", "icon" => "fa-download"],
     "import"         => ["label" => $_lang["menu_import"] ?? "Import", "icon" => "fa-upload"],
     "logs"           => ["label" => $_lang["menu_logs"] ?? "Logs", "icon" => "fa-list-alt"],

@@ -299,6 +299,9 @@ function ipmanager_unassign_ip(int $ipAddressId, bool $syncToWhmcs = true): bool
             return false;
         }
         $serviceId = (int) $assign->service_id;
+        $ipRow = Capsule::table(ipmanager_table("ip_addresses"))->where("id", $ipAddressId)->first();
+        $ip = $ipRow ? trim((string) ($ipRow->ip ?? "")) : "";
+
         Capsule::table(ipmanager_table("assignments"))->where("ip_address_id", $ipAddressId)->delete();
         Capsule::table(ipmanager_table("ip_addresses"))->where("id", $ipAddressId)->update([
             "status"     => "free",
@@ -306,6 +309,9 @@ function ipmanager_unassign_ip(int $ipAddressId, bool $syncToWhmcs = true): bool
         ]);
         if ($syncToWhmcs) {
             ipmanager_sync_dedicatedip_to_whmcs($serviceId, "");
+            if ($ip !== "" && function_exists("ipmanager_run_integration_remove_ip")) {
+                ipmanager_run_integration_remove_ip($serviceId, $ip);
+            }
         }
         ipmanager_netbox_push_unassign($ipAddressId);
         return true;
@@ -401,6 +407,69 @@ function ipmanager_run_integration_add_ip(int $serviceId, string $ip): void {
                     $result = $class::addIpToAccount($serverParams, $service, $ip);
                     if (!empty($result["message"]) && function_exists("ipmanager_log")) {
                         ipmanager_log("integration_add_ip", $type . " " . $ip . ": " . $result["message"], null, $service->userid ?? null);
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        // silent
+    }
+}
+
+/**
+ * Run 3rd party integration to remove IP from server (Proxmox, cPanel, etc.) when enabled.
+ *
+ * @param int    $serviceId tblhosting.id
+ * @param string $ip        IP address to remove
+ */
+function ipmanager_run_integration_remove_ip(int $serviceId, string $ip): void {
+    try {
+        $service = Capsule::table("tblhosting")->where("id", $serviceId)->first();
+        if (!$service || (int) $service->server === 0) {
+            return;
+        }
+        $server = Capsule::table("tblservers")->where("id", $service->server)->first();
+        if (!$server) {
+            return;
+        }
+        $type = strtolower(trim($server->type ?? ""));
+        $enabled = Capsule::table(ipmanager_table("integration_config"))->where("integration", $type)->where("enabled", 1)->first();
+        if (!$enabled) {
+            $baseType = explode("_", $type)[0];
+            $enabled = Capsule::table(ipmanager_table("integration_config"))->where("integration", $baseType)->where("enabled", 1)->first();
+        }
+        if (!$enabled) {
+            return;
+        }
+        $serverParams = [
+            "hostname"   => $server->hostname,
+            "username"   => $server->username,
+            "password"   => $server->password,
+            "accesshash" => $server->accesshash ?? "",
+            "port"       => $server->port ?? "",
+        ];
+        $map = [
+            "cpanel" => ["CpanelIntegration", "IpManagerCpanelIntegration"],
+            "cpanel_extended" => ["CpanelIntegration", "IpManagerCpanelIntegration"],
+            "directadmin" => ["DirectAdminIntegration", "IpManagerDirectAdminIntegration"],
+            "directadmin_extended" => ["DirectAdminIntegration", "IpManagerDirectAdminIntegration"],
+            "plesk" => ["PleskIntegration", "IpManagerPleskIntegration"],
+            "plesk_extended" => ["PleskIntegration", "IpManagerPleskIntegration"],
+            "proxmox" => ["ProxmoxIntegration", "IpManagerProxmoxIntegration"],
+            "proxmox_cloud" => ["ProxmoxIntegration", "IpManagerProxmoxIntegration"],
+            "solusvm" => ["SolusVmIntegration", "IpManagerSolusVmIntegration"],
+            "solusvm_extended" => ["SolusVmIntegration", "IpManagerSolusVmIntegration"],
+        ];
+        if (isset($map[$type])) {
+            [$file, $class] = $map[$type];
+            $path = __DIR__ . "/integrations/" . $file . ".php";
+            if (is_file($path)) {
+                require_once __DIR__ . "/integrations/BaseIntegration.php";
+                require_once $path;
+                if (class_exists($class)) {
+                    $result = $class::removeIpFromAccount($serverParams, $service, $ip);
+                    if (!empty($result["message"]) && function_exists("ipmanager_log")) {
+                        ipmanager_log("integration_remove_ip", $type . " " . $ip . ": " . $result["message"], null, $service->userid ?? null);
                     }
                 }
             }

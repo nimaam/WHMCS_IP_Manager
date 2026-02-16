@@ -48,7 +48,7 @@ $pools   = Capsule::table(ipmanager_table("pools"))->orderBy("name")->get();
 $q = Capsule::table("tblhosting as h")
     ->leftJoin("tblclients as c", "c.id", "=", "h.userid")
     ->leftJoin("tblproducts as p", "p.id", "=", "h.packageid")
-    ->select("h.id as service_id", "h.userid as client_id", "h.dedicatedip", "c.firstname", "c.lastname", "p.name as product_name");
+    ->select("h.id as service_id", "h.userid as client_id", "h.dedicatedip", "h.status as service_status", "c.firstname", "c.lastname", "p.name as product_name");
 if ($clientIdFilter > 0) {
     $q->where("h.userid", $clientIdFilter);
 }
@@ -91,6 +91,7 @@ foreach ($assignRows as $ar) {
                     <th><?php echo htmlspecialchars($LANG["service_id"] ?? "Service ID"); ?></th>
                     <th><?php echo htmlspecialchars($LANG["client"] ?? "Client"); ?></th>
                     <th><?php echo htmlspecialchars($LANG["product"] ?? "Product"); ?></th>
+                    <th><?php echo htmlspecialchars($LANG["service_status"] ?? "Service status"); ?></th>
                     <th><?php echo htmlspecialchars($LANG["assigned_ips"] ?? "Assigned IPs"); ?></th>
                     <th><?php echo htmlspecialchars($LANG["whmcs_dedicatedip"] ?? "WHMCS dedicatedip"); ?></th>
                     <th><?php echo htmlspecialchars($LANG["actions"] ?? "Actions"); ?></th>
@@ -105,6 +106,7 @@ foreach ($assignRows as $ar) {
                         <td><?php echo (int) $svc->service_id; ?></td>
                         <td>#<?php echo (int) $svc->client_id; ?> <?php echo htmlspecialchars(trim($svc->firstname . " " . $svc->lastname)); ?></td>
                         <td><?php echo htmlspecialchars($svc->product_name ?? "—"); ?></td>
+                        <td><span class="label label-<?php echo in_array($svc->service_status ?? "", ["Active", "Pending"], true) ? "success" : "default"; ?>"><?php echo htmlspecialchars($svc->service_status ?? "—"); ?></span></td>
                         <td>
                             <?php foreach ($assigned as $a): ?>
                                 <code><?php echo htmlspecialchars($a["ip"]); ?></code>
