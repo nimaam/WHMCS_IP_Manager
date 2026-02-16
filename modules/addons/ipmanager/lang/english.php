@@ -93,6 +93,7 @@ $_ADDONLANG["filter_subnet"]        = "Subnet";
 $_ADDONLANG["all"]                  = "All";
 $_ADDONLANG["delete"]               = "Delete";
 $_ADDONLANG["add_configuration"]    = "Add Configuration";
+$_ADDONLANG["create_configuration"] = "Create configuration";
 $_ADDONLANG["omit_dedicated_ip"]    = "Omit dedicated IP field";
 $_ADDONLANG["use_custom_field_assigned"] = "Use custom field instead of Assigned IP";
 $_ADDONLANG["custom_field_name"]    = "Custom field name";

@@ -45,11 +45,41 @@ if ($subAction === "save" && $_SERVER["REQUEST_METHOD"] === "POST") {
                     "created_at"                           => $now,
                     "updated_at"                           => $now,
                 ]);
+                $poolId   = isset($_POST["pool_id"]) && $_POST["pool_id"] !== "" ? (int) $_POST["pool_id"] : null;
+                $subnetId = isset($_POST["subnet_id"]) && $_POST["subnet_id"] !== "" ? (int) $_POST["subnet_id"] : null;
+                $productIds = isset($_POST["product_ids"]) && is_array($_POST["product_ids"]) ? array_map("intval", array_filter($_POST["product_ids"])) : [];
+                $serverIds  = isset($_POST["server_ids"]) && is_array($_POST["server_ids"]) ? array_map("intval", array_filter($_POST["server_ids"])) : [];
+                $productIds = array_filter($productIds, static function ($id) { return $id > 0; });
+                $serverIds  = array_filter($serverIds, static function ($id) { return $id > 0; });
+                if (($poolId > 0 || $subnetId > 0) && (count($productIds) > 0 || count($serverIds) > 0)) {
+                    foreach ($productIds as $relId) {
+                        Capsule::table(ipmanager_table("configuration_relations"))->insert([
+                            "configuration_id" => $configId,
+                            "relation_type"    => "product",
+                            "relation_id"      => $relId,
+                            "pool_id"          => $poolId,
+                            "subnet_id"        => $subnetId,
+                            "created_at"       => $now,
+                            "updated_at"       => $now,
+                        ]);
+                    }
+                    foreach ($serverIds as $relId) {
+                        Capsule::table(ipmanager_table("configuration_relations"))->insert([
+                            "configuration_id" => $configId,
+                            "relation_type"    => "server",
+                            "relation_id"      => $relId,
+                            "pool_id"          => $poolId,
+                            "subnet_id"        => $subnetId,
+                            "created_at"       => $now,
+                            "updated_at"       => $now,
+                        ]);
+                    }
+                }
             }
             if ($editId > 0) {
                 $configId = $editId;
             }
-            header("Location: " . $modulelink . "&action=configurations&sub=edit&id=" . $configId);
+            header("Location: " . $modulelink . "&action=configurations&sub=edit&id=" . $configId . (isset($_POST["product_ids"]) || isset($_POST["server_ids"]) ? "&bulk_saved=1" : ""));
             exit;
         } catch (Exception $e) {
             $configError = $e->getMessage();
@@ -225,6 +255,7 @@ $servers  = Capsule::table("tblservers")->orderBy("name")->get();
                             value="<?php echo $config ? htmlspecialchars($config->custom_field_name ?? "") : ""; ?>">
                     </div>
                 </div>
+                <?php if ($config): ?>
                 <div class="form-group">
                     <div class="col-sm-offset-2 col-sm-4">
                         <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars($LANG["save"] ?? "Save"); ?></button>
@@ -232,35 +263,43 @@ $servers  = Capsule::table("tblservers")->orderBy("name")->get();
                     </div>
                 </div>
             </form>
-
-            <?php if ($config): ?>
+                <?php endif; ?>
                 <?php
-                $existingProductIds = array_map("intval", Capsule::table(ipmanager_table("configuration_relations"))
-                    ->where("configuration_id", $config->id)
-                    ->where("relation_type", "product")
-                    ->pluck("relation_id")
-                    ->toArray());
-                $existingServerIds = array_map("intval", Capsule::table(ipmanager_table("configuration_relations"))
-                    ->where("configuration_id", $config->id)
-                    ->where("relation_type", "server")
-                    ->pluck("relation_id")
-                    ->toArray());
-                $existingPoolId = null;
-                $existingSubnetId = null;
-                $firstRel = Capsule::table(ipmanager_table("configuration_relations"))
-                    ->where("configuration_id", $config->id)
-                    ->whereIn("relation_type", ["product", "server"])
-                    ->first();
-                if ($firstRel) {
-                    $existingPoolId = (int) ($firstRel->pool_id ?? 0) ?: null;
-                    $existingSubnetId = (int) ($firstRel->subnet_id ?? 0) ?: null;
+                if ($config) {
+                    $existingProductIds = array_map("intval", Capsule::table(ipmanager_table("configuration_relations"))
+                        ->where("configuration_id", $config->id)
+                        ->where("relation_type", "product")
+                        ->pluck("relation_id")
+                        ->toArray());
+                    $existingServerIds = array_map("intval", Capsule::table(ipmanager_table("configuration_relations"))
+                        ->where("configuration_id", $config->id)
+                        ->where("relation_type", "server")
+                        ->pluck("relation_id")
+                        ->toArray());
+                    $existingPoolId = null;
+                    $existingSubnetId = null;
+                    $firstRel = Capsule::table(ipmanager_table("configuration_relations"))
+                        ->where("configuration_id", $config->id)
+                        ->whereIn("relation_type", ["product", "server"])
+                        ->first();
+                    if ($firstRel) {
+                        $existingPoolId = (int) ($firstRel->pool_id ?? 0) ?: null;
+                        $existingSubnetId = (int) ($firstRel->subnet_id ?? 0) ?: null;
+                    }
+                } else {
+                    $existingProductIds = [];
+                    $existingServerIds = [];
+                    $existingPoolId = null;
+                    $existingSubnetId = null;
                 }
                 ?>
                 <hr>
                 <h4><?php echo htmlspecialchars($LANG["assign_pool_products_servers"] ?? "Assign pool to products and servers"); ?></h4>
                 <p class="text-muted small"><?php echo htmlspecialchars($LANG["assign_pool_products_servers_help"] ?? "Select a Pool or Subnet, then check one or more Products and/or Servers (clusters/nodes). Save to apply. These will receive an IP from the chosen pool when provisioned."); ?></p>
+                <?php if ($config): ?>
                 <form method="post" action="<?php echo $modulelink; ?>&action=configurations&sub=relation_bulk_save" class="form-horizontal">
                     <input type="hidden" name="configuration_id" value="<?php echo (int) $config->id; ?>">
+                <?php endif; ?>
                     <div class="form-group">
                         <label class="control-label col-sm-2"><?php echo htmlspecialchars($LANG["pool"] ?? "Pool"); ?></label>
                         <div class="col-sm-4">
@@ -320,13 +359,22 @@ $servers  = Capsule::table("tblservers")->orderBy("name")->get();
                     </div>
                     <div class="form-group">
                         <div class="col-sm-offset-2 col-sm-6">
-                            <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars($LANG["save_products_servers"] ?? "Save products and servers selection"); ?></button>
+                            <?php if ($config): ?>
+                                <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars($LANG["save_products_servers"] ?? "Save products and servers selection"); ?></button>
+                            </div>
+                        </div>
+                    </form>
+                <?php else: ?>
+                            <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars($LANG["create_configuration"] ?? "Create configuration"); ?></button>
+                            <a href="<?php echo $modulelink; ?>&action=configurations" class="btn btn-default"><?php echo htmlspecialchars($LANG["cancel"] ?? "Cancel"); ?></a>
                         </div>
                     </div>
                 </form>
-                <?php if (!empty($_GET["bulk_saved"])): ?>
+                <?php endif; ?>
+                <?php if ($config && !empty($_GET["bulk_saved"])): ?>
                     <div class="alert alert-success"><?php echo htmlspecialchars($LANG["bulk_saved"] ?? "Products and servers selection saved."); ?></div>
                 <?php endif; ?>
+                <?php if ($config): ?>
                 <hr>
                 <h4><?php echo htmlspecialchars($LANG["configuration_relations"] ?? "Relations (Products, Addons, Config Options, Servers)"); ?></h4>
                 <table class="table table-striped table-condensed">
