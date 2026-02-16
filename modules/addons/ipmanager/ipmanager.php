@@ -73,6 +73,8 @@ function ipmanager_activate(): array {
         IpManagerSchema::install();
         require_once __DIR__ . "/hooks.php";
         add_hook("ClientAreaPrimarySidebar", 1, "ipmanager_clientarea_sidebar");
+        add_hook("PreModuleCreate", 1, "ipmanager_pre_module_create");
+        add_hook("AfterModuleCreate", 1, "ipmanager_after_module_create");
         return [
             "status"      => "success",
             "description" => "IP Manager has been activated. Configure addon and create IP subnets from Addons → IP Manager.",
@@ -93,6 +95,8 @@ function ipmanager_activate(): array {
 function ipmanager_deactivate(): array {
     try {
         remove_hook("ClientAreaPrimarySidebar", 1, "ipmanager_clientarea_sidebar");
+        remove_hook("PreModuleCreate", 1, "ipmanager_pre_module_create");
+        remove_hook("AfterModuleCreate", 1, "ipmanager_after_module_create");
         IpManagerSchema::uninstall();
         return [
             "status"      => "success",

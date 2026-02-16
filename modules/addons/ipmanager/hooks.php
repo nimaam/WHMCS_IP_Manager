@@ -45,16 +45,51 @@ function ipmanager_admin_client_services_tab(array $vars): string {
 }
 
 /**
- * After product is created or upgraded - optionally assign IP from pool (placeholder).
+ * PreModuleCreate: auto-assign an IP from the configured pool/subnet before the server module runs.
+ * Returns dedicatedip so Proxmox/VMware/cPanel etc. receive the IP in their params.
  *
- * @param array<string, mixed> $vars
+ * @param array<string, mixed> $vars Module params (e.g. serviceid, userid) or wrapper with "params" key
+ * @return array<string, mixed> Overrides for module params (e.g. ["dedicatedip" => "1.2.3.4"])
+ */
+function ipmanager_pre_module_create(array $vars): array {
+    $params = $vars["params"] ?? $vars;
+    $serviceId = (int) ($params["serviceid"] ?? 0);
+    if ($serviceId <= 0) {
+        return [];
+    }
+    if (!function_exists("ipmanager_auto_assign_ip_for_service")) {
+        return [];
+    }
+    ipmanager_auto_assign_ip_for_service($serviceId);
+    $service = Capsule::table("tblhosting")->where("id", $serviceId)->first();
+    $dedicatedip = $service && !empty(trim((string) ($service->dedicatedip ?? "")))
+        ? trim((string) $service->dedicatedip)
+        : "";
+    if ($dedicatedip === "") {
+        return [];
+    }
+    return ["dedicatedip" => $dedicatedip];
+}
+
+/**
+ * AfterModuleCreate: log and push the assigned IP to the server via integration (Proxmox, cPanel, etc.).
+ *
+ * @param array<string, mixed> $vars Module params (serviceid, userid, etc.)
  */
 function ipmanager_after_module_create(array $vars): void {
-    $serviceId = (int) ($vars["serviceid"] ?? 0);
+    $params = $vars["params"] ?? $vars;
+    $serviceId = (int) ($params["serviceid"] ?? 0);
     if ($serviceId <= 0) {
         return;
     }
-    ipmanager_log("service_created", "Service #" . $serviceId . " created", null, $vars["userid"] ?? null);
+    ipmanager_log("service_created", "Service #" . $serviceId . " created", null, $params["userid"] ?? null);
+    $service = Capsule::table("tblhosting")->where("id", $serviceId)->first();
+    $ip = $service && !empty(trim((string) ($service->dedicatedip ?? "")))
+        ? trim((string) $service->dedicatedip)
+        : "";
+    if ($ip !== "" && function_exists("ipmanager_run_integration_add_ip")) {
+        ipmanager_run_integration_add_ip($serviceId, $ip);
+    }
 }
 
 /**

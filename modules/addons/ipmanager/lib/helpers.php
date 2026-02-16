@@ -458,6 +458,73 @@ function ipmanager_find_subnet_containing_ip(string $ip): ?object {
 }
 
 /**
+ * Get pool_id and subnet_id for a service from configuration_relations (by product or server).
+ *
+ * @param int $serviceId
+ * @return array{pool_id: int|null, subnet_id: int|null}|null
+ */
+function ipmanager_get_pool_or_subnet_for_service(int $serviceId): ?array {
+    $service = Capsule::table("tblhosting")->where("id", $serviceId)->first();
+    if (!$service) {
+        return null;
+    }
+    $productId = (int) ($service->packageid ?? 0);
+    $serverId  = (int) ($service->server ?? 0);
+
+    $rel = Capsule::table(ipmanager_table("configuration_relations"))
+        ->where(function ($q) use ($productId, $serverId) {
+            $q->where(function ($q) use ($productId) {
+                $q->where("relation_type", "product")->where("relation_id", $productId);
+            })
+                ->orWhere(function ($q) use ($serverId) {
+                    $q->where("relation_type", "server")->where("relation_id", $serverId);
+                });
+        })
+        ->where(function ($q) {
+            $q->whereNotNull("pool_id")->where("pool_id", ">", 0)
+                ->orWhereNotNull("subnet_id")->where("subnet_id", ">", 0);
+        })
+        ->select("pool_id", "subnet_id")
+        ->first();
+
+    if (!$rel || ((int) ($rel->pool_id ?? 0) === 0 && (int) ($rel->subnet_id ?? 0) === 0)) {
+        return null;
+    }
+    $poolId   = (int) ($rel->pool_id ?? 0) > 0 ? (int) $rel->pool_id : null;
+    $subnetId = (int) ($rel->subnet_id ?? 0) > 0 ? (int) $rel->subnet_id : null;
+    if ($poolId === null && $subnetId === null) {
+        return null;
+    }
+    return ["pool_id" => $poolId, "subnet_id" => $subnetId];
+}
+
+/**
+ * Auto-assign a free IP from the configured pool/subnet for this service (used when VPS is provisioned).
+ *
+ * @param int $serviceId
+ * @return bool True if an IP was assigned
+ */
+function ipmanager_auto_assign_ip_for_service(int $serviceId): bool {
+    $service = Capsule::table("tblhosting")->where("id", $serviceId)->first();
+    if (!$service) {
+        return false;
+    }
+    if (Capsule::table(ipmanager_table("assignments"))->where("service_id", $serviceId)->exists()) {
+        return true;
+    }
+    $poolSubnet = ipmanager_get_pool_or_subnet_for_service($serviceId);
+    if ($poolSubnet === null) {
+        return false;
+    }
+    $free = ipmanager_get_free_ip_from_pool_or_subnet($poolSubnet["pool_id"], $poolSubnet["subnet_id"]);
+    if (!$free) {
+        return false;
+    }
+    $clientId = (int) $service->userid;
+    return ipmanager_assign_ip_to_service((int) $free->id, $clientId, $serviceId, true);
+}
+
+/**
  * Get a free IP from pool or subnet (first available by id).
  *
  * @param int|null $poolId
