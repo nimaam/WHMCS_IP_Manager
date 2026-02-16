@@ -48,7 +48,7 @@ $pools   = Capsule::table(ipmanager_table("pools"))->orderBy("name")->get();
 $q = Capsule::table("tblhosting as h")
     ->leftJoin("tblclients as c", "c.id", "=", "h.userid")
     ->leftJoin("tblproducts as p", "p.id", "=", "h.packageid")
-    ->select("h.id as service_id", "h.userid as client_id", "h.dedicatedip", "h.status as service_status", "c.firstname", "c.lastname", "p.name as product_name");
+    ->select("h.id as service_id", "h.userid as client_id", "h.dedicatedip", "h.domainstatus as service_status", "c.firstname", "c.lastname", "p.name as product_name");
 if ($clientIdFilter > 0) {
     $q->where("h.userid", $clientIdFilter);
 }

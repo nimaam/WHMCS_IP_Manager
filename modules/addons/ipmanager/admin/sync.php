@@ -29,7 +29,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["run_sync"])) {
         ->where("dedicatedip", "!=", "")
         ->select("id as service_id", "userid as client_id", "dedicatedip");
     if ($liveOnly) {
-        $query->whereIn("status", ["Active", "Pending"]);
+        $query->whereIn("domainstatus", ["Active", "Pending"]);
     }
     $rows = $query->get();
 

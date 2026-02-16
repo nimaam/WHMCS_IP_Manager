@@ -36,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         if ($releaseAll) {
             $rows = Capsule::table(ipmanager_table("assignments") . " as a")
                 ->join("tblhosting as h", "h.id", "=", "a.service_id")
-                ->whereNotIn("h.status", ["Active", "Pending"])
+                ->whereRaw("h.domainstatus NOT IN (?, ?)", ["Active", "Pending"])
                 ->select("a.ip_address_id")
                 ->distinct()
                 ->pluck("ip_address_id");
@@ -58,14 +58,14 @@ $orphans = Capsule::table(ipmanager_table("assignments") . " as a")
     ->join("tblhosting as h", "h.id", "=", "a.service_id")
     ->leftJoin("tblclients as c", "c.id", "=", "h.userid")
     ->leftJoin("tblproducts as p", "p.id", "=", "h.packageid")
-    ->whereNotIn("h.status", ["Active", "Pending"])
+    ->whereRaw("h.domainstatus NOT IN (?, ?)", ["Active", "Pending"])
     ->select(
         "a.id as assignment_id",
         "a.ip_address_id",
         "a.service_id",
         "a.client_id",
         "ip.ip",
-        "h.status as service_status",
+        "h.domainstatus as service_status",
         "h.domain",
         "c.firstname",
         "c.lastname",
