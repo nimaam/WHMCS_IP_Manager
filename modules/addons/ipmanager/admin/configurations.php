@@ -98,6 +98,53 @@ if ($subAction === "relation_save" && $_SERVER["REQUEST_METHOD"] === "POST") {
     }
 }
 
+if ($subAction === "relation_bulk_save" && $_SERVER["REQUEST_METHOD"] === "POST") {
+    $configId = (int) ($_POST["configuration_id"] ?? 0);
+    $poolId   = isset($_POST["pool_id"]) && $_POST["pool_id"] !== "" ? (int) $_POST["pool_id"] : null;
+    $subnetId = isset($_POST["subnet_id"]) && $_POST["subnet_id"] !== "" ? (int) $_POST["subnet_id"] : null;
+    $productIds = isset($_POST["product_ids"]) && is_array($_POST["product_ids"]) ? array_map("intval", $_POST["product_ids"]) : [];
+    $serverIds  = isset($_POST["server_ids"]) && is_array($_POST["server_ids"]) ? array_map("intval", $_POST["server_ids"]) : [];
+    $productIds = array_filter($productIds, static function ($id) { return $id > 0; });
+    $serverIds  = array_filter($serverIds, static function ($id) { return $id > 0; });
+
+    if ($configId > 0 && ($poolId > 0 || $subnetId > 0)) {
+        try {
+            $now = date("Y-m-d H:i:s");
+            Capsule::table(ipmanager_table("configuration_relations"))
+                ->where("configuration_id", $configId)
+                ->whereIn("relation_type", ["product", "server"])
+                ->delete();
+
+            foreach ($productIds as $relId) {
+                Capsule::table(ipmanager_table("configuration_relations"))->insert([
+                    "configuration_id" => $configId,
+                    "relation_type"    => "product",
+                    "relation_id"      => $relId,
+                    "pool_id"          => $poolId,
+                    "subnet_id"        => $subnetId,
+                    "created_at"       => $now,
+                    "updated_at"       => $now,
+                ]);
+            }
+            foreach ($serverIds as $relId) {
+                Capsule::table(ipmanager_table("configuration_relations"))->insert([
+                    "configuration_id" => $configId,
+                    "relation_type"    => "server",
+                    "relation_id"      => $relId,
+                    "pool_id"          => $poolId,
+                    "subnet_id"        => $subnetId,
+                    "created_at"       => $now,
+                    "updated_at"       => $now,
+                ]);
+            }
+            header("Location: " . $modulelink . "&action=configurations&sub=edit&id=" . $configId . "&bulk_saved=1");
+            exit;
+        } catch (Exception $e) {
+            $configError = $e->getMessage();
+        }
+    }
+}
+
 if ($subAction === "relation_delete" && isset($_GET["rel_id"])) {
     $relId = (int) $_GET["rel_id"];
     $rel = Capsule::table(ipmanager_table("configuration_relations"))->where("id", $relId)->first();
@@ -187,6 +234,99 @@ $servers  = Capsule::table("tblservers")->orderBy("name")->get();
             </form>
 
             <?php if ($config): ?>
+                <?php
+                $existingProductIds = array_map("intval", Capsule::table(ipmanager_table("configuration_relations"))
+                    ->where("configuration_id", $config->id)
+                    ->where("relation_type", "product")
+                    ->pluck("relation_id")
+                    ->toArray());
+                $existingServerIds = array_map("intval", Capsule::table(ipmanager_table("configuration_relations"))
+                    ->where("configuration_id", $config->id)
+                    ->where("relation_type", "server")
+                    ->pluck("relation_id")
+                    ->toArray());
+                $existingPoolId = null;
+                $existingSubnetId = null;
+                $firstRel = Capsule::table(ipmanager_table("configuration_relations"))
+                    ->where("configuration_id", $config->id)
+                    ->whereIn("relation_type", ["product", "server"])
+                    ->first();
+                if ($firstRel) {
+                    $existingPoolId = (int) ($firstRel->pool_id ?? 0) ?: null;
+                    $existingSubnetId = (int) ($firstRel->subnet_id ?? 0) ?: null;
+                }
+                ?>
+                <hr>
+                <h4><?php echo htmlspecialchars($LANG["assign_pool_products_servers"] ?? "Assign pool to products and servers"); ?></h4>
+                <p class="text-muted small"><?php echo htmlspecialchars($LANG["assign_pool_products_servers_help"] ?? "Select a Pool or Subnet, then check one or more Products and/or Servers (clusters/nodes). Save to apply. These will receive an IP from the chosen pool when provisioned."); ?></p>
+                <form method="post" action="<?php echo $modulelink; ?>&action=configurations&sub=relation_bulk_save" class="form-horizontal">
+                    <input type="hidden" name="configuration_id" value="<?php echo (int) $config->id; ?>">
+                    <div class="form-group">
+                        <label class="control-label col-sm-2"><?php echo htmlspecialchars($LANG["pool"] ?? "Pool"); ?></label>
+                        <div class="col-sm-4">
+                            <select name="pool_id" class="form-control" id="bulk-pool-id">
+                                <option value="">— <?php echo htmlspecialchars($LANG["pool"] ?? "Pool"); ?> —</option>
+                                <?php foreach ($pools as $pl): ?>
+                                    <option value="<?php echo (int) $pl->id; ?>"<?php echo ($existingPoolId === (int) $pl->id) ? " selected" : ""; ?>><?php echo htmlspecialchars($pl->name); ?> (<?php echo htmlspecialchars($pl->subnet_name ?? ""); ?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2"><?php echo htmlspecialchars($LANG["subnet"] ?? "Subnet"); ?></label>
+                        <div class="col-sm-4">
+                            <select name="subnet_id" class="form-control" id="bulk-subnet-id">
+                                <option value="">— <?php echo htmlspecialchars($LANG["subnet"] ?? "Subnet"); ?> —</option>
+                                <?php foreach ($subnets as $sn): ?>
+                                    <option value="<?php echo (int) $sn->id; ?>"<?php echo ($existingSubnetId === (int) $sn->id) ? " selected" : ""; ?>><?php echo htmlspecialchars($sn->name); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                            <p class="help-block small"><?php echo htmlspecialchars($LANG["pool_or_subnet_required"] ?? "Select at least one Pool or Subnet."); ?></p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2"><?php echo htmlspecialchars($LANG["products"] ?? "Products"); ?></label>
+                        <div class="col-sm-6">
+                            <div class="well well-sm" style="max-height: 200px; overflow-y: auto;">
+                                <?php if ($products->isEmpty()): ?>
+                                    <p class="text-muted"><?php echo htmlspecialchars($LANG["no_products"] ?? "No products."); ?></p>
+                                <?php else: ?>
+                                    <?php foreach ($products as $pr): ?>
+                                        <label class="checkbox-inline" style="display: block; margin-left: 0;">
+                                            <input type="checkbox" name="product_ids[]" value="<?php echo (int) $pr->id; ?>"<?php echo in_array((int) $pr->id, $existingProductIds, true) ? " checked" : ""; ?>>
+                                            <?php echo htmlspecialchars($pr->name); ?>
+                                        </label>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-sm-2"><?php echo htmlspecialchars($LANG["servers_nodes"] ?? "Servers (clusters / nodes)"); ?></label>
+                        <div class="col-sm-6">
+                            <div class="well well-sm" style="max-height: 200px; overflow-y: auto;">
+                                <?php if ($servers->isEmpty()): ?>
+                                    <p class="text-muted"><?php echo htmlspecialchars($LANG["no_servers"] ?? "No servers. Add servers in Setup → Products/Services → Servers."); ?></p>
+                                <?php else: ?>
+                                    <?php foreach ($servers as $sv): ?>
+                                        <label class="checkbox-inline" style="display: block; margin-left: 0;">
+                                            <input type="checkbox" name="server_ids[]" value="<?php echo (int) $sv->id; ?>"<?php echo in_array((int) $sv->id, $existingServerIds, true) ? " checked" : ""; ?>>
+                                            <?php echo htmlspecialchars($sv->name); ?>
+                                        </label>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-offset-2 col-sm-6">
+                            <button type="submit" class="btn btn-primary"><?php echo htmlspecialchars($LANG["save_products_servers"] ?? "Save products and servers selection"); ?></button>
+                        </div>
+                    </div>
+                </form>
+                <?php if (!empty($_GET["bulk_saved"])): ?>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($LANG["bulk_saved"] ?? "Products and servers selection saved."); ?></div>
+                <?php endif; ?>
                 <hr>
                 <h4><?php echo htmlspecialchars($LANG["configuration_relations"] ?? "Relations (Products, Addons, Config Options, Servers)"); ?></h4>
                 <table class="table table-striped table-condensed">
