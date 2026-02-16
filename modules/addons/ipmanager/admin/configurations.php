@@ -280,6 +280,8 @@ $servers  = Capsule::table("tblservers")->orderBy("name")->get();
                 })();
                 </script>
                 <p class="text-muted small"><?php echo htmlspecialchars($LANG["relation_help"] ?? "Select type, then one target, then either a Pool or Subnet for IP assignment."); ?></p>
+                <p class="text-muted small"><strong><?php echo htmlspecialchars($LANG["relation_help_product"] ?? "Product"); ?>:</strong> <?php echo htmlspecialchars($LANG["relation_help_product_desc"] ?? "Any order of this product gets an IP from the chosen pool (any server/cluster)."); ?>
+                    <strong><?php echo htmlspecialchars($LANG["relation_help_server"] ?? "Server"); ?>:</strong> <?php echo htmlspecialchars($LANG["relation_help_server_desc"] ?? "Any service on this server (cluster or node from WHMCS Servers) gets an IP from the pool. Add one relation per server if you have multiple clusters/nodes."); ?></p>
             <?php endif; ?>
         <?php else: ?>
             <p class="text-muted"><?php echo htmlspecialchars($LANG["configurations_info"] ?? "Create configurations for different IP assignment scenarios (products, addons, configurable options, servers)."); ?></p>
