@@ -32,6 +32,7 @@ class IpManagerSchema {
         self::createAcl();
         self::createIntegrationConfig();
         self::createUsageAlerts();
+        self::createIpamMapping();
     }
 
     /**
@@ -39,6 +40,7 @@ class IpManagerSchema {
      */
     public static function uninstall(): void {
         $tables = [
+            "ipam_mapping",
             "usage_alerts",
             "integration_config",
             "acl",
@@ -301,6 +303,22 @@ class IpManagerSchema {
             $table->timestamps();
             $table->foreign("subnet_id")->references("id")->on(ipmanager_table("subnets"))->onDelete("cascade");
             $table->index("subnet_id");
+        });
+    }
+
+    private static function createIpamMapping(): void {
+        if (Capsule::schema()->hasTable(ipmanager_table("ipam_mapping"))) {
+            return;
+        }
+        Capsule::schema()->create(ipmanager_table("ipam_mapping"), function ($table) {
+            $table->increments("id");
+            $table->string("entity_type", 32)->comment("subnet, ip_address");
+            $table->unsignedInteger("entity_id");
+            $table->string("ipam_source", 32)->comment("netbox");
+            $table->string("ipam_id", 64)->comment("External ID from IPAM");
+            $table->timestamps();
+            $table->unique(["entity_type", "entity_id", "ipam_source"], "ipmanager_ipam_mapping_unique");
+            $table->index(["ipam_source", "ipam_id"]);
         });
     }
 }

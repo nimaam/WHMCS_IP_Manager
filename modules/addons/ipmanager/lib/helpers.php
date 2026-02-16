@@ -278,6 +278,7 @@ function ipmanager_assign_ip_to_service(int $ipAddressId, int $clientId, int $se
             ipmanager_sync_dedicatedip_to_whmcs($serviceId, $ip->ip);
         }
         ipmanager_run_integration_add_ip($serviceId, $ip->ip);
+        ipmanager_netbox_push_assign($ipAddressId, $serviceId);
         return true;
     } catch (Exception $e) {
         return false;
@@ -306,9 +307,43 @@ function ipmanager_unassign_ip(int $ipAddressId, bool $syncToWhmcs = true): bool
         if ($syncToWhmcs) {
             ipmanager_sync_dedicatedip_to_whmcs($serviceId, "");
         }
+        ipmanager_netbox_push_unassign($ipAddressId);
         return true;
     } catch (Exception $e) {
         return false;
+    }
+}
+
+/**
+ * Push assigned IP to NetBox (create or update to active).
+ *
+ * @param int $ipAddressId
+ * @param int $serviceId
+ */
+function ipmanager_netbox_push_assign(int $ipAddressId, int $serviceId): void {
+    try {
+        if (!class_exists("IpManagerNetBoxPush")) {
+            require_once __DIR__ . "/ipam/NetBoxPush.php";
+        }
+        IpManagerNetBoxPush::pushAssign($ipAddressId, $serviceId);
+    } catch (Exception $e) {
+        // silent
+    }
+}
+
+/**
+ * Push unassigned IP to NetBox (set status deprecated).
+ *
+ * @param int $ipAddressId
+ */
+function ipmanager_netbox_push_unassign(int $ipAddressId): void {
+    try {
+        if (!class_exists("IpManagerNetBoxPush")) {
+            require_once __DIR__ . "/ipam/NetBoxPush.php";
+        }
+        IpManagerNetBoxPush::pushUnassign($ipAddressId);
+    } catch (Exception $e) {
+        // silent
     }
 }
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Admin sidebar menu for IP Manager.
+ * Admin horizontal menu for IP Manager.
  *
  * @var string $modulelink
  * @var array  $_lang
@@ -27,17 +27,25 @@ $menu = [
     "translations"   => ["label" => $_lang["menu_translations"] ?? "Translations", "icon" => "fa-language"],
     "acl"            => ["label" => $_lang["menu_acl"] ?? "ACL", "icon" => "fa-lock"],
     "integrations"   => ["label" => $_lang["menu_integrations"] ?? "Integrations", "icon" => "fa-plug"],
+    "ipam"           => ["label" => $_lang["menu_ipam"] ?? "IPAM (NetBox)", "icon" => "fa-cloud-download"],
 ];
+
+$logoUrl = "../modules/addons/ipmanager/assets/logo.svg";
 ?>
-<div class="sidebar-content">
-    <ul class="nav nav-pills nav-stacked">
-        <?php foreach ($menu as $action => $item): ?>
-            <li class="<?php echo $current === $action ? "active" : ""; ?>">
-                <a href="<?php echo $base . $action; ?>">
-                    <i class="fa <?php echo $item["icon"]; ?>"></i>
-                    <?php echo htmlspecialchars($item["label"]); ?>
-                </a>
-            </li>
-        <?php endforeach; ?>
-    </ul>
+<div class="panel panel-default" style="margin-bottom: 15px;">
+    <div class="panel-body" style="padding: 10px 15px;">
+        <div style="margin-bottom: 12px;">
+            <img src="<?php echo htmlspecialchars($logoUrl); ?>" alt="IP Manager" class="ipmanager-logo" style="max-height: 40px; width: auto; display: inline-block; vertical-align: middle;" onerror="this.style.display='none'">
+        </div>
+        <ul class="nav nav-tabs" style="border-bottom: none; margin: 0;">
+            <?php foreach ($menu as $action => $item): ?>
+                <li class="<?php echo $current === $action ? "active" : ""; ?>">
+                    <a href="<?php echo $base . $action; ?>">
+                        <i class="fa <?php echo $item["icon"]; ?>"></i>
+                        <?php echo htmlspecialchars($item["label"]); ?>
+                    </a>
+                </li>
+            <?php endforeach; ?>
+        </ul>
+    </div>
 </div>

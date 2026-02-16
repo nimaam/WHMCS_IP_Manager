@@ -43,8 +43,15 @@ function ipmanager_config(): array {
             "cleaner_enabled" => [
                 "FriendlyName" => "IP Cleaner Enabled",
                 "Type"         => "yesno",
-                "Description"  => "Enable IP cleaner to ensure assigned IPs are in use.",
+                "Description"  => "Enable IP cleaner to ensure assigned IPs are in use (run via cron).",
                 "Default"      => "",
+            ],
+            "cleaner_behavior" => [
+                "FriendlyName" => "IP Cleaner Behavior",
+                "Type"         => "dropdown",
+                "Options"      => "notify_only,mark_free",
+                "Description"  => "When an assigned IP is no longer in use: Notify Only = email report only; Mark Free = unassign and mark IP as free.",
+                "Default"      => "notify_only",
             ],
             "custom_field_instead_of_assigned" => [
                 "FriendlyName" => "Use Custom Field Instead Of Assigned IP",
@@ -124,6 +131,7 @@ function ipmanager_output(array $vars): void {
         "translations",
         "acl",
         "integrations",
+        "ipam",
     ];
     if (!in_array($action, $allowed, true)) {
         $action = "dashboard";

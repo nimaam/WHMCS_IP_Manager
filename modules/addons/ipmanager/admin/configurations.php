@@ -117,7 +117,7 @@ $pools   = Capsule::table(ipmanager_table("pools") . " as p")
     ->get();
 $products = Capsule::table("tblproducts")->orderBy("name")->get();
 $addons   = Capsule::table("tbladdons")->orderBy("name")->get();
-$configOptions = Capsule::table("tblproductconfigoptions")->orderBy("name")->get();
+$configOptions = Capsule::table("tblproductconfigoptions")->orderBy("optionname")->get();
 $servers  = Capsule::table("tblservers")->orderBy("name")->get();
 
 ?>
@@ -216,7 +216,7 @@ $servers  = Capsule::table("tblservers")->orderBy("name")->get();
                                 $targetName = $a ? $a->name : $r->relation_id;
                             } elseif ($r->relation_type === "configoption") {
                                 $c = Capsule::table("tblproductconfigoptions")->where("id", $r->relation_id)->first();
-                                $targetName = $c ? $c->name : $r->relation_id;
+                                $targetName = $c ? ($c->optionname ?? $c->name ?? $r->relation_id) : $r->relation_id;
                             } elseif ($r->relation_type === "server") {
                                 $s = Capsule::table("tblservers")->where("id", $r->relation_id)->first();
                                 $targetName = $s ? $s->name : $r->relation_id;
@@ -268,7 +268,7 @@ $servers  = Capsule::table("tblservers")->orderBy("name")->get();
                     var data = {
                         product: [<?php $a=[]; foreach($products as $pr){ $a[]='{id:'.(int)$pr->id.',name:'.json_encode($pr->name).'}'; } echo implode(',',$a); ?>],
                         addon: [<?php $a=[]; foreach($addons as $ad){ $a[]='{id:'.(int)$ad->id.',name:'.json_encode($ad->name).'}'; } echo implode(',',$a); ?>],
-                        configoption: [<?php $a=[]; foreach($configOptions as $co){ $a[]='{id:'.(int)$co->id.',name:'.json_encode($co->name).'}'; } echo implode(',',$a); ?>],
+                        configoption: [<?php $a=[]; foreach($configOptions as $co){ $a[]='{id:'.(int)$co->id.',name:'.json_encode($co->optionname ?? $co->name ?? '').'}'; } echo implode(',',$a); ?>],
                         server: [<?php $a=[]; foreach($servers as $sv){ $a[]='{id:'.(int)$sv->id.',name:'.json_encode($sv->name).'}'; } echo implode(',',$a); ?>]
                     };
                     var sel = document.getElementById('rel-type'), relId = document.getElementById('rel-id');

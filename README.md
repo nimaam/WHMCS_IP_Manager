@@ -27,7 +27,13 @@ modules/addons/ipmanager/
 ├── hooks.php              # WHMCS hooks (sidebar, logging)
 ├── lib/
 │   ├── helpers.php        # CIDR/IP helpers
-│   └── Schema.php         # Database tables create/drop
+│   ├── Schema.php         # Database tables create/drop
+│   ├── ipam/
+│   │   ├── NetBoxClient.php  # NetBox API client
+│   │   ├── NetBoxSync.php    # Pull prefixes + IPs
+│   │   └── NetBoxPush.php    # Push assign/unassign to NetBox
+│   ├── integrations/      # cPanel, DirectAdmin, Plesk, etc.
+│   └── UsageAlerts.php
 ├── admin/
 │   ├── _menu.php         # Admin sidebar
 │   ├── dashboard.php
@@ -41,7 +47,11 @@ modules/addons/ipmanager/
 │   ├── logs.php
 │   ├── settings.php
 │   ├── translations.php
-│   └── acl.php
+│   ├── acl.php
+│   ├── integrations.php
+│   └── ipam.php           # IPAM (NetBox) config and sync
+├── cron/
+│   └── usage_alerts.php
 ├── lang/
 │   └── english.php
 └── templates/
@@ -86,12 +96,20 @@ modules/addons/ipmanager/
 | acl                     | Staff access control |
 | integration_config      | cPanel, DirectAdmin, Plesk, etc. (JSON) |
 | usage_alerts            | Subnet usage % and last alert sent |
+| ipam_mapping            | Map subnets/IPs to external IPAM (e.g. NetBox) for sync |
 
 ## Configuration (Addon Module Settings)
 
 - **Usage Alert Threshold (%)** – Email when subnet usage exceeds this %.
 - **IP Cleaner Enabled** – Ensure assigned IPs are in use (stub).
 - **Use Custom Field Instead Of Assigned IP** – Use custom field when set per config.
+
+## IPAM (NetBox) Integration
+
+- **Addons → IP Manager → IPAM (NetBox)** – Configure NetBox URL and API token (from NetBox: **Profile → API Tokens**).
+- **Sync from NetBox** – Pull all NetBox prefixes as subnets and their IP addresses into IP Manager. Status (active, reserved, deprecated) is mapped to assigned/reserved/free. Mappings are stored so future syncs update existing records.
+- **Push to NetBox** – When "Push to NetBox when assigning IP" is enabled, assigning an IP in WHMCS creates or updates the IP in NetBox (status active, description "WHMCS Service #ID"). Unassigning sets the IP to deprecated in NetBox.
+- Optional filters: **Site ID** and **Tenant ID** to limit which prefixes are synced.
 
 ## Planned / Stub Features
 
